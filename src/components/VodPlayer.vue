@@ -24,6 +24,10 @@
 </template>
 
 <script>
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { gpx } from "@tmcw/togeojson";
+
 export default {
   name: "VodPlayer",
   components: {},
@@ -120,7 +124,7 @@ export default {
             evt.target.result,
             "text/xml"
           );
-          this.geoJson = toGeoJSON.gpx(data);
+          this.geoJson = gpx(data);
           this.addGeoJson(this.geoJson);
         } catch (e) {
           console.error(e);

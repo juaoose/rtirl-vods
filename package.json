@@ -7,6 +7,8 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@tmcw/togeojson": "^4.4.1",
+    "mapbox-gl": "^2.2.0",
     "vue": "^3.0.5"
   },
   "devDependencies": {
