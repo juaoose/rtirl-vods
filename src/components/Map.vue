@@ -61,8 +61,8 @@ export default {
         }
       );
 
-      // Center map and default zoom level
-      this.map.setView([44.61131534, -123.4726739], 9);
+      // Center above NYC for now, I should pan to the start of the given track
+      this.map.setView([40.79623613970058, -73.95152667405937], 11);
 
       // Adds the background layer to the map
       this.map.addLayer(basemapLayer);
