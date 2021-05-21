@@ -9,7 +9,6 @@
   "dependencies": {
     "@tmcw/togeojson": "^4.4.1",
     "leaflet": "^1.7.1",
-    "leaflet-play": "^0.4.4",
     "mapbox-gl": "^2.2.0",
     "vis-timeline": "^7.4.8",
     "vue": "^3.0.5"

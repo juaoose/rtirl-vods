@@ -6,6 +6,7 @@
 <script>
 import { Timeline } from "vis-timeline";
 import { DataSet } from "vis-data";
+import moment from "moment";
 
 export default {
   name: "Timeline",
@@ -23,15 +24,32 @@ export default {
       type: [Array, DataSet],
       default: () => [],
     },
+    options: {
+      type: Object,
+    },
   },
   watch: {
     time: {
       deep: true,
-      handler: function (newVal, oldVal) {
+      handler: function (newVal) {
         this.timeline.setCustomTime(new Date(newVal));
       },
     },
+    items: {
+      deep: true,
+      handler: function (data) {
+        this.timeline.itemsData.update(data);
+      },
+    },
+    options: {
+      deep: true,
+      handler: function (options) {
+        this.timeline.setOptions(options);
+        this.timeline.redraw();
+      },
+    },
   },
+  emits: ["timechange"],
   methods: {
     setCustomTime(time) {
       this.timeline.setCustomTime(new Date(time));
@@ -62,9 +80,4 @@ export default {
 </script>
 
 <style scoped>
-#visualization {
-  width: 100%;
-  height: 200px;
-  border: 1px solid lightgray;
-}
 </style>

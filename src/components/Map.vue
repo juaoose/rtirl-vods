@@ -8,7 +8,7 @@
 
 <script>
 import L from "leaflet";
-import {} from "leaflet-play";
+import {} from "../../lib/LeafletPlayback.min.js";
 
 export default {
   name: "Map",
@@ -29,27 +29,22 @@ export default {
       type: Number,
     },
     data: {
-      type: String,
+      type: Object,
     },
   },
   watch: {
     playbackTime: {
       deep: true,
-      handler: function (newVal, oldVal) {
+      handler: function (cursor) {
         if (!this.playback.isPlaying()) {
-          this.playback.setCursor(newVal);
+          this.playback.setCursor(cursor);
         }
       },
     },
     data: {
       deep: true,
-      handler: function (data, oldVal) {
-        try {
-          var parsedFile = L.Playback.Util.ParseGPX(data);
-          this.playback.setData(parsedFile);
-        } catch (e) {
-          console.error(e);
-        }
+      handler: function (data) {
+        this.playback.setData(data);
       },
     },
   },
@@ -84,6 +79,8 @@ export default {
         (ms) => this.$emit("move", ms),
         playbackOptions
       );
+
+      this.playback.get;
     },
   },
   mounted: function () {

@@ -9,11 +9,32 @@ export default {
     videoId: {
       type: Number,
     },
+    currentTime: {
+      type: Number,
+      default: 0,
+    },
+    offset: {
+      type: Number,
+      default: 0,
+    },
   },
+  watch: {
+    videoId: {
+      deep: false,
+      handler: function (videoId) {
+        this.player.setVideo(videoId, 0);
+      },
+    },
+    currentTime: {
+      deep: true,
+      handler: function (timestamp) {
+        this.player.seek(timestamp);
+      },
+    },
+  },
+  emits: ["load"],
   data() {
     return {
-      currentTime: 0,
-      offset: 0,
       parentDomains: ["localhost"],
       player: null,
     };
@@ -30,6 +51,17 @@ export default {
       };
 
       this.player = new Twitch.Player("twitch-embed", options);
+      this.player.addEventListener(Twitch.Player.READY, () => {
+        // Since I can't figure out why duration cant be retrieved at this point
+        this.player.seek(0);
+        this.player.setVolume(0.5);
+        this.player.play();
+      });
+      this.player.addEventListener(Twitch.Player.PLAY, () => {
+        // Cant figure out why I cant retrieve this thingie on Twitch.Player.READY...
+        const vodDuration = this.player.getDuration();
+        this.$emit("load", this.player.getDuration(vodDuration));
+      });
     },
   },
   mounted() {
