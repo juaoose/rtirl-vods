@@ -3,7 +3,9 @@
 
   <div class="flex-container">
     <Player
-      :videoId="videoId"
+      :video-id="video.id"
+      :current-time="video.time"
+      :playing="video.playing"
       @load="buildVODTile"
       class="flex-child magenta"
     />
@@ -30,9 +32,29 @@
     </div>
 
     <div class="form-group">
-      <button class="btn btn-success btn-block btn-lg">Upload</button>
+      <button class="btn">Upload</button>
     </div>
   </form>
+
+  <label for="vod-id">VOD Id</label>
+  <input
+    v-on:keyup.enter="setVodId"
+    :value="video.id"
+    type="number"
+    id="vod-id"
+    name="vod-id"
+  />
+  <br />
+  <label for="vod-offset"
+    >VOD Offset (negative means video started earlier than gpx)</label
+  >
+  <input
+    v-on:keyup.enter="setOffset"
+    :value="video.offset"
+    type="number"
+    id="vod-offset"
+    name="vod-offset"
+  />
 </template>
 
 <script>
@@ -46,14 +68,15 @@ export default {
   components: { Map, Player, Timeline },
   data() {
     return {
-      videoId: 1023837339,
-      parentDomains: ["localhost"],
-      playerWidth: "100%",
-      playerHeight: "100%",
-      player: null,
       gpxFile: null,
       mapData: null,
       playbackTime: 0,
+      video: {
+        id: 1026142582,
+        offset: 0,
+        time: 0,
+        playing: false,
+      },
       // The way I seem to overwrite the once initialized timeline feels as its not well designed
       timeline: {
         time: null,
@@ -76,12 +99,33 @@ export default {
     //Having these two updateTime methods feels wrong
     updateTime(time) {
       this.playbackTime = time.getTime();
+
+      if (time >= this.video.offset) {
+        const desiredVodTime =
+          (time.getTime() -
+            this.timeline.options.start -
+            this.video.offset * 1000) /
+          1000;
+        this.video.time = desiredVodTime;
+      }
     },
     updateTimeLineTime(time) {
       this.timeline.time = time;
     },
     uploadFile(event) {
       this.gpxFile = event.target.files[0];
+    },
+    setVodId(event) {
+      console.log("vodId: " + event.target.value);
+      this.video.id = isNaN(event.target.value)
+        ? 0
+        : parseInt(event.target.value);
+    },
+    setOffset(event) {
+      console.log("offset: " + event.target.value);
+      this.video.offset = isNaN(event.target.value)
+        ? 0
+        : parseInt(event.target.value);
     },
     handleSubmit() {
       var reader = new FileReader();
@@ -108,8 +152,8 @@ export default {
       );
 
       if (this.timeline.items.length < 2) {
-        var vodEndDate = this.timeline.options.start;
-        vodEndDate = new Date(vodEndDate.getTime() + 1000 * this.vodDuration);
+        var vodStart = this.timeline.options.end;
+        vodStart = new Date(vodStart.getTime() - 1000 * this.vodDuration);
         //This fails if you have not set/loaded a VOD?
         this.timeline.items.push(
           {
@@ -118,8 +162,8 @@ export default {
             content: "Your activity",
           },
           {
-            start: this.timeline.options.start,
-            end: vodEndDate,
+            start: vodStart,
+            end: this.timeline.options.end,
             content: "Your twitch VOD",
           }
         );
@@ -144,5 +188,14 @@ export default {
 
 .flex-child:first-child {
   margin-right: 20px;
+}
+
+.btn {
+  background-color: #4caf50;
+  color: white;
+  text-align: center;
+  height: 10%;
+  width: 10%;
+  border-radius: 25px;
 }
 </style>

@@ -1,9 +1,8 @@
 <template>
-  <div
-    id="map"
-    class="flex-child green"
-    style="width: 100%; height: 100%"
-  ></div>
+  <div class="flex-container">
+    <div id="map" class="flex-child map"></div>
+    <button type="button" class="flex-btn">Play</button>
+  </div>
 </template>
 
 <script>
@@ -69,8 +68,8 @@ export default {
 
       // Playback options
       var playbackOptions = {
-        playControl: true,
-        dateControl: false,
+        playControl: false,
+        dateControl: true,
         sliderControl: false,
         tracksLayer: false,
         speed: 1,
@@ -92,3 +91,29 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.flex-container {
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+.flex-child {
+  flex: 1;
+  height: 100%;
+}
+
+.flex-btn {
+  background-color: #4caf50;
+  color: white;
+  text-align: center;
+  position: absolute;
+  height: 10%;
+  width: 10%;
+  z-index: 1000;
+  border-radius: 25px;
+  bottom: 5%;
+  right: 1%;
+}
+</style>

@@ -6,7 +6,6 @@
 <script>
 import { Timeline } from "vis-timeline";
 import { DataSet } from "vis-data";
-import moment from "moment";
 
 export default {
   name: "Timeline",

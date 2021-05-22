@@ -13,9 +13,8 @@ export default {
       type: Number,
       default: 0,
     },
-    offset: {
-      type: Number,
-      default: 0,
+    playing: {
+      type: Boolean,
     },
   },
   watch: {
@@ -26,9 +25,20 @@ export default {
       },
     },
     currentTime: {
-      deep: true,
+      deep: false,
       handler: function (timestamp) {
-        this.player.seek(timestamp);
+        console.log("curren time change: " + timestamp);
+        if (this.player !== null) {
+          this.player.seek(timestamp);
+        }
+      },
+    },
+    playing: {
+      deep: false,
+      handler: function (isPlaying) {
+        if (this.player !== null) {
+          isPlaying ? this.player.play() : this.player.pause();
+        }
       },
     },
   },
@@ -48,6 +58,8 @@ export default {
         video: this.videoId,
         autoplay: false,
         time: "0h0m0s",
+        // TODO check if they can actually be removed in all cases
+        controls: false,
       };
 
       this.player = new Twitch.Player("twitch-embed", options);
@@ -60,7 +72,7 @@ export default {
       this.player.addEventListener(Twitch.Player.PLAY, () => {
         // Cant figure out why I cant retrieve this thingie on Twitch.Player.READY...
         const vodDuration = this.player.getDuration();
-        this.$emit("load", this.player.getDuration(vodDuration));
+        this.$emit("load", vodDuration);
       });
     },
   },
