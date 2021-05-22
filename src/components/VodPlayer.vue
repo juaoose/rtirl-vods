@@ -1,16 +1,30 @@
 <template>
-  <h2>Hello I am a bot</h2>
+  <h2>VOD Replay</h2>
 
   <div class="flex-container">
-    <div id="twitch-embed" class="flex-child magenta"></div>
-
-    <div
-      id="map"
+    <Player
+      :video-id="video.id"
+      :current-time="video.time"
+      :playing="video.playing"
+      @load="buildVODTile"
+      class="flex-child magenta"
+    />
+    <Map
+      ref="map"
+      :playback-time="playbackTime"
+      :data="mapData"
+      @move="updateTimeLineTime"
       class="flex-child green"
-      style="width: 100%; height: 100%"
-    ></div>
+    />
   </div>
   <br />
+  <Timeline
+    ref="timeline"
+    :items="timeline.items"
+    :time="timeline.time"
+    :options="timeline.options"
+    @timechange="updateTime"
+  />
 
   <form @submit.prevent="handleSubmit">
     <div class="form-group">
@@ -18,208 +32,148 @@
     </div>
 
     <div class="form-group">
-      <button class="btn btn-success btn-block btn-lg">Upload</button>
+      <button class="btn">Upload</button>
     </div>
   </form>
+
+  <label for="vod-id">VOD Id</label>
+  <input
+    v-on:keyup.enter="setVodId"
+    :value="video.id"
+    type="number"
+    id="vod-id"
+    name="vod-id"
+  />
+  <br />
+  <label for="vod-offset"
+    >VOD Offset (negative means video started earlier than gpx)</label
+  >
+  <input
+    v-on:keyup.enter="setOffset"
+    :value="video.offset"
+    type="number"
+    id="vod-offset"
+    name="vod-offset"
+  />
 </template>
 
 <script>
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { gpx } from "@tmcw/togeojson";
+import Map from "./Map.vue";
+import Player from "./Player.vue";
+import Timeline from "./Timeline.vue";
+import {} from "../../lib/LeafletPlayback.min.js";
 
 export default {
   name: "VodPlayer",
-  components: {},
+  components: { Map, Player, Timeline },
   data() {
     return {
-      videoId: 1023837339,
-      parentDomains: ["localhost"],
-      playerWidth: "100%",
-      playerHeight: "100%",
-      player: null,
-      map: null,
       gpxFile: null,
-      geoJson: null,
-      marker: null,
-      counter: 0,
-      sessionSteps: null,
-      sessionStartTime: null,
-      animation: null,
-      currentPlayerTime: 0,
+      mapData: null,
+      playbackTime: 0,
+      video: {
+        id: 1026142582,
+        offset: 0,
+        time: 0,
+        playing: false,
+      },
+      // The way I seem to overwrite the once initialized timeline feels as its not well designed
+      timeline: {
+        time: null,
+        items: [],
+        options: {
+          width: "100%",
+          height: "200px",
+          showCurrentTime: false,
+          selectable: false,
+          start: null,
+          end: null,
+        },
+      },
     };
   },
   methods: {
-    initializeMap() {
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoiampqampqampqampqampqampqaiIsImEiOiJja290MThwMzIwNjNkMndwaHR5djlhYThqIn0.zULjRWtxmVmaWe-FDobI-A";
-      this.map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/streets-v11",
-      });
-
-      this.map.on("load", () => console.log(this.map));
+    buildVODTile(vodDuration) {
+      this.vodDuration = vodDuration;
     },
-    initializePlayer() {
-      var options = {
-        width: this.playerWidth,
-        height: this.playerHeight,
-        parent: this.parentDomains,
-        video: this.videoId,
-        autoplay: false,
-        time: "0h0m0s",
-      };
+    //Having these two updateTime methods feels wrong
+    updateTime(time) {
+      this.playbackTime = time.getTime();
 
-      this.player = new Twitch.Player("twitch-embed", options);
-    },
-    registerEventListeners() {
-      this.player.addEventListener(Twitch.Player.PAUSE, this.pauseVideo);
-      this.player.addEventListener(Twitch.Player.PLAY, this.resumeVideo);
-      this.player.addEventListener(Twitch.Player.READY, () => {
-        console.log(this.player.getDuration());
-      });
-    },
-    pauseVideo() {
-      console.log("Video was paused");
-      this.currentPlayerTime = this.player.getCurrentTime();
-      cancelAnimationFrame(this.animation);
-    },
-    resumeVideo() {
-      var positionInSeconds = this.player.getCurrentTime();
-      if (this.currentPlayerTime != positionInSeconds) {
-        if (this.geoJson != null) {
-          var estimatedPlayerDate = new Date(this.sessionStartTime.valueOf());
-          console.log(estimatedPlayerDate);
-          estimatedPlayerDate.setSeconds(
-            estimatedPlayerDate.getSeconds() + positionInSeconds
-          );
-
-          var desiredTimestampIndex = this.findClosestTimestamp(
-            this.geoJson.features[0].properties.coordinateProperties.times,
-            estimatedPlayerDate,
-            0,
-            this.sessionSteps
-          );
-          console.log("Desired timestamp " + desiredTimestampIndex);
-          this.counter = desiredTimestampIndex;
-
-          this.animate();
-        }
-      } else if (this.geoJson != null) {
-        this.animate();
+      if (time >= this.video.offset) {
+        const desiredVodTime =
+          (time.getTime() -
+            this.timeline.options.start -
+            this.video.offset * 1000) /
+          1000;
+        this.video.time = desiredVodTime;
       }
     },
-    endVideo() {
-      console.log("Video playback ended");
-      cancelAnimationFrame(this.animation);
+    updateTimeLineTime(time) {
+      this.timeline.time = time;
     },
     uploadFile(event) {
       this.gpxFile = event.target.files[0];
+    },
+    setVodId(event) {
+      console.log("vodId: " + event.target.value);
+      this.video.id = isNaN(event.target.value)
+        ? 0
+        : parseInt(event.target.value);
+    },
+    setOffset(event) {
+      console.log("offset: " + event.target.value);
+      this.video.offset = isNaN(event.target.value)
+        ? 0
+        : parseInt(event.target.value);
     },
     handleSubmit() {
       var reader = new FileReader();
       reader.onload = (evt) => {
         try {
-          var data = new DOMParser().parseFromString(
-            evt.target.result,
-            "text/xml"
-          );
-          this.geoJson = gpx(data);
-          this.addGeoJson(this.geoJson);
+          // Should I try to keep this dependency only in the Map component?
+          var geoJson = L.Playback.Util.ParseGPX(evt.target.result);
+          this.loadTimelineEvents(geoJson);
+          this.mapData = geoJson;
         } catch (e) {
           console.error(e);
         }
       };
       reader.readAsText(this.gpxFile);
     },
-    addGeoJson(geoJson) {
-      console.log(geoJson);
-      this.sessionSteps = geoJson.features[0].geometry.coordinates.length;
-      this.sessionStartTime = new Date(geoJson.features[0].properties.time);
-      this.map.addSource("route", {
-        type: "geojson",
-        data: geoJson,
-      });
-
-      this.map.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#888",
-          "line-width": 3,
-        },
-      });
-
-      this.marker = new mapboxgl.Marker({
-        color: "#EC0868",
-        className: "marker",
-      });
-      this.counter = 0;
-      this.marker
-        .setLngLat(geoJson.features[0].geometry.coordinates[0])
-        .addTo(this.map);
-    },
-    animate() {
-      this.marker.setLngLat(
-        this.geoJson.features[0].geometry.coordinates[this.counter]
+    loadTimelineEvents(geoJson) {
+      this.timeline.options.start = new Date(
+        geoJson.features[0].properties.time[0]
       );
-      this.counter++;
-      if (this.counter < this.sessionSteps) {
-        this.animation = requestAnimationFrame(this.animate);
-      } else {
-        this.counter = 0;
-      }
-    },
-    findClosestTimestamp(timestampArray, targetTimestamp, start, finish) {
-      const center = Math.floor((start + finish) / 2);
-      if (
-        targetTimestamp.getTime() == new Date(timestampArray[center]).getTime()
-      ) {
-        return center;
-      }
-      if (finish - 1 === start) {
-        return start;
-      }
-      if (
-        targetTimestamp.getTime() > new Date(timestampArray[center]).getTime()
-      ) {
-        return this.findClosestTimestamp(
-          timestampArray,
-          targetTimestamp,
-          center,
-          finish
-        );
-      }
-      if (
-        targetTimestamp.getTime() < new Date(timestampArray[center]).getTime()
-      ) {
-        return this.findClosestTimestamp(
-          timestampArray,
-          targetTimestamp,
-          start,
-          center
+      this.timeline.options.end = new Date(
+        geoJson.features[0].properties.time[
+          geoJson.features[0].properties.time.length - 1
+        ]
+      );
+
+      if (this.timeline.items.length < 2) {
+        var vodStart = this.timeline.options.end;
+        vodStart = new Date(vodStart.getTime() - 1000 * this.vodDuration);
+        //This fails if you have not set/loaded a VOD?
+        this.timeline.items.push(
+          {
+            start: this.timeline.options.start,
+            end: this.timeline.options.end,
+            content: "Your activity",
+          },
+          {
+            start: vodStart,
+            end: this.timeline.options.end,
+            content: "Your twitch VOD",
+          }
         );
       }
     },
-  },
-  mounted: function () {
-    this.initializeMap();
-    this.initializePlayer();
-    this.registerEventListeners();
   },
 };
 </script>
 
 <style scoped>
-a {
-  color: #42b983;
-}
-
 .flex-container {
   display: flex;
   height: 40vh;
@@ -234,5 +188,14 @@ a {
 
 .flex-child:first-child {
   margin-right: 20px;
+}
+
+.btn {
+  background-color: #4caf50;
+  color: white;
+  text-align: center;
+  height: 10%;
+  width: 10%;
+  border-radius: 25px;
 }
 </style>
