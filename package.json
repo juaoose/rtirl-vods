@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "leaflet": "^1.7.1",
+    "moment": "^2.29.1",
     "vis-data": "^7.1.2",
     "vis-timeline": "^7.4.8",
     "vue": "^3.0.5"
