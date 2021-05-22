@@ -45,7 +45,7 @@ export default {
   emits: ["load"],
   data() {
     return {
-      parentDomains: ["localhost"],
+      parentDomains: ["localhost", "vods.juanr.co"],
       player: null,
     };
   },
