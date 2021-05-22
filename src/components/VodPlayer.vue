@@ -68,6 +68,7 @@ export default {
   components: { Map, Player, Timeline },
   data() {
     return {
+      vodDuration: null,
       gpxFile: null,
       mapData: null,
       playbackTime: 0,
@@ -154,6 +155,7 @@ export default {
       if (this.timeline.items.length < 2) {
         var vodStart = this.timeline.options.end;
         vodStart = new Date(vodStart.getTime() - 1000 * this.vodDuration);
+        this.video.offset = (vodStart - this.timeline.options.start) / 1000;
         //This fails if you have not set/loaded a VOD?
         this.timeline.items.push(
           {
