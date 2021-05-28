@@ -27,7 +27,6 @@ export default {
     currentTime: {
       deep: false,
       handler: function (timestamp) {
-        console.log("curren time change: " + timestamp);
         if (this.player !== null) {
           this.player.seek(timestamp);
         }
@@ -59,7 +58,7 @@ export default {
         autoplay: false,
         time: "0h0m0s",
         // TODO check if they can actually be removed in all cases
-        controls: false,
+        //controls: false,
       };
 
       this.player = new Twitch.Player("twitch-embed", options);

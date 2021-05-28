@@ -14,6 +14,7 @@
       :playback-time="playbackTime"
       :data="mapData"
       @move="updateTimeLineTime"
+      @playing="updateVideoPlayback"
       class="flex-child green"
     />
   </div>
@@ -117,16 +118,17 @@ export default {
       this.gpxFile = event.target.files[0];
     },
     setVodId(event) {
-      console.log("vodId: " + event.target.value);
       this.video.id = isNaN(event.target.value)
         ? 0
         : parseInt(event.target.value);
     },
     setOffset(event) {
-      console.log("offset: " + event.target.value);
       this.video.offset = isNaN(event.target.value)
         ? 0
         : parseInt(event.target.value);
+    },
+    updateVideoPlayback(isPlaying) {
+      this.video.playing = isPlaying;
     },
     handleSubmit() {
       var reader = new FileReader();

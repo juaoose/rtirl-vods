@@ -1,7 +1,14 @@
 <template>
   <div class="flex-container">
     <div id="map" class="flex-child map"></div>
-    <button type="button" class="flex-btn">Play</button>
+    <button
+      v-on:click="changePlaybackStatus()"
+      id="play-button"
+      type="button"
+      v-bind:class="buttonClass"
+    >
+      {{ status }}
+    </button>
   </div>
 </template>
 
@@ -35,9 +42,7 @@ export default {
     playbackTime: {
       deep: true,
       handler: function (cursor) {
-        if (!this.playback.isPlaying()) {
-          this.playback.setCursor(cursor);
-        }
+        this.playback.setCursor(cursor);
       },
     },
     data: {
@@ -49,7 +54,6 @@ export default {
   },
   methods: {
     initializeMap() {
-      //L.Icon.Default.imagePath = './images'
       this.map = new L.Map("map");
 
       var basemapLayer = new L.TileLayer(
@@ -85,6 +89,29 @@ export default {
 
       this.playback.get;
     },
+    changePlaybackStatus() {
+      if (this.playback.isPlaying() === false) {
+        this.playback.start();
+        this.$emit("playing", true);
+      } else {
+        this.playback.stop();
+        this.$emit("playing", false);
+      }
+    },
+  },
+  computed: {
+    status() {
+      return this.playback !== null && !this.playback.isPlaying()
+        ? "Play"
+        : "Stop";
+    },
+    buttonClass() {
+      return {
+        "flex-btn": true,
+        playing: this.playback !== null && !this.playback.isPlaying(),
+        "not-playing": this.playback !== null && this.playback.isPlaying(),
+      };
+    },
   },
   mounted: function () {
     this.initializeMap();
@@ -105,8 +132,6 @@ export default {
 }
 
 .flex-btn {
-  background-color: #4caf50;
-  color: white;
   text-align: center;
   position: absolute;
   height: 10%;
@@ -115,5 +140,15 @@ export default {
   border-radius: 25px;
   bottom: 5%;
   right: 1%;
+}
+
+.playing {
+  background-color: #4caf50;
+  color: white;
+}
+
+.not-playing {
+  background-color: rgba(165, 34, 34, 0.87);
+  color: white;
 }
 </style>
