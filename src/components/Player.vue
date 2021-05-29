@@ -55,7 +55,7 @@ export default {
         height: "100%",
         parent: this.parentDomains,
         video: this.videoId,
-        autoplay: false,
+        autoplay: true,
         time: "0h0m0s",
         // TODO check if they can actually be removed in all cases
         //controls: false,
@@ -63,10 +63,8 @@ export default {
 
       this.player = new Twitch.Player("twitch-embed", options);
       this.player.addEventListener(Twitch.Player.READY, () => {
-        // Since I can't figure out why duration cant be retrieved at this point
+        // Setting time to 0 in the options doesnt seem to work either
         this.player.seek(0);
-        this.player.setVolume(0.5);
-        this.player.play();
       });
       this.player.addEventListener(Twitch.Player.PLAY, () => {
         // Cant figure out why I cant retrieve this thingie on Twitch.Player.READY...
